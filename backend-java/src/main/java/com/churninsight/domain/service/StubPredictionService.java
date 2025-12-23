@@ -9,10 +9,16 @@ public class StubPredictionService implements PredictionService {
 
     @Override
     public PredictionResponse predict(PredictionRequest request) {
-        // Stub inicial para que el equipo pueda integrar frontend/QA.
-        // En el siguiente paso se reemplaza por integración con el microservicio Python o el modelo embebido.
-        double probability = 0.50;
-        String forecast = "medio_riesgo";
-        return new PredictionResponse(forecast, probability);
+        double probability = 0.76; 
+        
+        String prevision;
+        if (probability > 0.70) {
+            prevision = "Va a cancelar";
+        } else if (probability >= 0.40) {
+            prevision = "En observación";
+        } else {
+            prevision = "Va a continuar";
+        }
+        return new PredictionResponse(prevision, probability);
     }
 }
