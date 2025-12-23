@@ -9,16 +9,38 @@ public class StubPredictionService implements PredictionService {
 
     @Override
     public PredictionResponse predict(PredictionRequest request) {
-        double probability = 0.76; 
+        double probabilidad = calcularProbabilidadDinamica(request);
         
+        return clasificarConTusUmbrales(probabilidad);
+    }
+
+    private double calcularProbabilidadDinamica(PredictionRequest req) {
+        if (req == null) return 0.0;
+
+        double score = 0.1; 
+
+        if (req.getMonthlyCharges() != null && req.getMonthlyCharges() > 70.0) {
+            score += 0.4;
+        }
+
+        if (req.getTenureMonths() != null && req.getTenureMonths() < 6) {
+            score += 0.4;
+        }
+
+        return Math.min(score, 0.99); 
+    }
+
+    private PredictionResponse clasificarConTusUmbrales(double prob) {
         String prevision;
-        if (probability > 0.70) {
+
+        if (prob > 0.70) {
             prevision = "Va a cancelar";
-        } else if (probability >= 0.40) {
+        } else if (prob >= 0.40) {
             prevision = "En observación";
         } else {
             prevision = "Va a continuar";
         }
-        return new PredictionResponse(prevision, probability);
+
+        return new PredictionResponse(prevision, prob);
     }
 }
