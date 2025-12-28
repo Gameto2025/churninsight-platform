@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs - Se regeneran automáticamente
+logs/
+*.log
+
+# Modelos entrenados - Muy pesados para Git
+models/*.pkl
+models/*.h5
+models/*.joblib
+!models/.gitkeep
+
+# Datos - Usar DVC o almacenamiento externo
+data/*.csv
+data/*.parquet
+data/*.json
+!data/README.md
+!data/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Outputs temporales
+outputs/
+experiments/
+mlruns/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
