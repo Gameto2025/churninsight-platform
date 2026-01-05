@@ -40,10 +40,10 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { PredictionResponse } from "./types";
+import { ChurnPredictionResponse } from "./types";
 
 interface PredictionResultsProps {
-  prediction: PredictionResponse | null;
+  prediction: ChurnPredictionResponse | null;
   error: string | null;
 }
 
@@ -52,7 +52,7 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
   error,
 }) => {
   // Calcular variables antes de cualquier return
-  const probability = prediction?.probabilidad || 0;
+  const probability = prediction?.churn_probability || 0;
   const isHighRisk = probability > 0.7;
   const isMediumRisk = probability > 0.4 && probability <= 0.7;
   const isLowRisk = probability <= 0.4;
@@ -139,18 +139,15 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
 
   return (
     <Box sx={{ mt: 4 }}>
-      {/* Header de Resultados */}
+      {/* Header de Resultados - estilo más discreto */}
       <Paper
-        elevation={3}
+        elevation={1}
         sx={{
           p: 3,
           mb: 3,
-          background: `linear-gradient(135deg, ${
-            isHighRisk ? "#d32f2f" : isMediumRisk ? "#ed6c02" : "#2e7d32"
-          } 0%, ${
-            isHighRisk ? "#c62828" : isMediumRisk ? "#e65100" : "#1b5e20"
-          } 100%)`,
-          color: "white",
+          bgcolor: "background.paper",
+          color: "text.primary",
+          border: "1px solid #e0e0e0",
         }}
       >
         <Box
@@ -162,16 +159,16 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
         >
           <Box>
             <Typography
-              variant="h4"
+              variant="h5"
               gutterBottom
-              sx={{ display: "flex", alignItems: "center" }}
+              sx={{ display: "flex", alignItems: "center", fontWeight: 600 }}
             >
               {riskIcon}
               <Box component="span" sx={{ ml: 2 }}>
                 Análisis Completado
               </Box>
             </Typography>
-            <Typography variant="h6">
+            <Typography variant="body1">
               Cliente: <strong>{prediction.customer_id}</strong>
             </Typography>
           </Box>
@@ -194,7 +191,13 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
       {/* Métricas Principales */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
         <Box sx={{ flex: "1 1 calc(33.333% - 16px)", minWidth: "280px" }}>
-          <Card sx={{ height: "100%" }}>
+          <Card
+            sx={{
+              height: "100%",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom color="text.secondary">
                 Probabilidad de Churn
@@ -216,7 +219,13 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
         </Box>
 
         <Box sx={{ flex: "1 1 calc(33.333% - 16px)", minWidth: "280px" }}>
-          <Card sx={{ height: "100%" }}>
+          <Card
+            sx={{
+              height: "100%",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom color="text.secondary">
                 Nivel de Confianza
@@ -238,7 +247,13 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
         </Box>
 
         <Box sx={{ flex: "1 1 calc(33.333% - 16px)", minWidth: "280px" }}>
-          <Card sx={{ height: "100%" }}>
+          <Card
+            sx={{
+              height: "100%",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom color="text.secondary">
                 Índice de Retención
@@ -263,7 +278,12 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
       {/* Gráficos de Análisis */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mt: 2 }}>
         <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "320px" }}>
-          <Card>
+          <Card
+            sx={{
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 📊 Distribución del Riesgo
@@ -297,7 +317,12 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
         </Box>
 
         <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "320px" }}>
-          <Card>
+          <Card
+            sx={{
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 📈 Probabilidad vs Umbral
@@ -325,7 +350,12 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
         </Box>
 
         <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "320px" }}>
-          <Card>
+          <Card
+            sx={{
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 🎯 Perfil del Cliente
@@ -350,7 +380,12 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
         </Box>
 
         <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "320px" }}>
-          <Card>
+          <Card
+            sx={{
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+            }}
+          >
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 📉 Tendencia de Retención
@@ -381,7 +416,13 @@ const PredictionResults: React.FC<PredictionResultsProps> = ({
       </Box>
 
       {/* Recomendaciones */}
-      <Card sx={{ mt: 3 }}>
+      <Card
+        sx={{
+          mt: 3,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          border: "1px solid #e0e0e0",
+        }}
+      >
         <CardContent>
           <Typography
             variant="h6"

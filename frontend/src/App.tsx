@@ -9,14 +9,23 @@ import {
   Tabs,
   Tab,
   Fade,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { Assessment, Analytics, Dashboard, History } from "@mui/icons-material";
+import {
+  Assessment,
+  Analytics,
+  Dashboard,
+  History,
+  Logout,
+} from "@mui/icons-material";
 import theme from "./theme";
 import PredictionForm from "./PredictionForm";
 import PredictionResults from "./PredictionResults";
 import { predictChurn, fetchStats } from "./services/api";
-import { PredictionRequest, PredictionResponse } from "./types";
+import { ChurnPredictionRequest, ChurnPredictionResponse } from "./types";
 import { Header, DashboardPanel, HistoryPanel } from "./components";
+import Login from "./components/Login";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -45,7 +54,11 @@ function TabPanel(props: TabPanelProps) {
 }
 
 function App() {
-  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
+  const [prediction, setPrediction] = useState<ChurnPredictionResponse | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
@@ -55,7 +68,20 @@ function App() {
     todayPredictions: number;
   } | null>(null);
 
+  // Verificar si hay sesión activa al cargar
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    const savedUsername = localStorage.getItem("username");
+
+    if (token && savedUsername) {
+      setIsAuthenticated(true);
+      setUsername(savedUsername);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     const loadStats = async () => {
       try {
         const statsData = await fetchStats();
@@ -66,27 +92,29 @@ function App() {
       }
     };
     loadStats();
-  }, []);
+  }, [isAuthenticated]);
 
-  const handlePrediction = async (formData: PredictionRequest) => {
+  const handleLoginSuccess = (token: string, user: string) => {
+    setIsAuthenticated(true);
+    setUsername(user);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setIsAuthenticated(false);
+    setUsername("");
+    setPrediction(null);
+    setError(null);
+    setTabValue(0);
+  };
+
+  const handlePrediction = async (formData: ChurnPredictionRequest) => {
     setLoading(true);
     setError(null);
     setPrediction(null);
 
     try {
-      if (formData.age < 18 || formData.age > 70) {
-        throw new Error("La edad debe estar entre 18 y 70 años");
-      }
-
-      if (
-        formData.customer_satisfaction_score < 1 ||
-        formData.customer_satisfaction_score > 10
-      ) {
-        throw new Error(
-          "La puntuación de satisfacción debe estar entre 1 y 10"
-        );
-      }
-
       const result = await predictChurn(formData);
       setPrediction(result);
 
@@ -111,19 +139,54 @@ function App() {
     setTabValue(newValue);
   };
 
+  // Si no está autenticado, mostrar pantalla de login
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Login onLoginSuccess={handleLoginSuccess} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ flexGrow: 1, minHeight: "100vh", bgcolor: "#f0f2f5" }}>
+      <Box
+        sx={{ flexGrow: 1, minHeight: "100vh", bgcolor: "background.default" }}
+      >
+        {/* Header con botón de logout */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 3,
+            py: 1,
+            bgcolor: "primary.main",
+            color: "white",
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Bienvenido, {username}
+          </Typography>
+          <Tooltip title="Cerrar Sesión">
+            <IconButton onClick={handleLogout} sx={{ color: "white" }}>
+              <Logout />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
         <Header stats={stats || undefined} />
         <Container maxWidth="xl" sx={{ mt: 3, mb: 4 }}>
           <Paper
-            elevation={6}
+            elevation={1}
             sx={{
-              borderRadius: 4,
+              borderRadius: 8,
               overflow: "hidden",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
-              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid #e0e0e0",
+              bgcolor: "background.paper",
             }}
           >
             <Box
@@ -149,33 +212,33 @@ function App() {
                     color: "#6b7280",
                     minHeight: 72,
                     "&.Mui-selected": {
-                      color: "#1e3c72",
-                      bgcolor: "rgba(30, 60, 114, 0.04)",
+                      color: "#1a3a5c",
+                      bgcolor: "rgba(26, 58, 92, 0.04)",
                     },
                   },
-                  "& .MuiTabs-indicator": { height: 3, bgcolor: "#1e3c72" },
+                  "& .MuiTabs-indicator": { height: 3, bgcolor: "#1a3a5c" },
                 }}
               >
                 <Tab
                   icon={<Assessment sx={{ fontSize: 28 }} />}
-                  label="Análisis de Usuario"
+                  label="Evaluación de Cliente"
                   iconPosition="start"
                 />
                 <Tab
                   icon={<Analytics sx={{ fontSize: 28 }} />}
-                  label="Predicción IA"
+                  label="Resultado de Predicción"
                   iconPosition="start"
                   disabled={!prediction && !error}
                 />
                 <Tab
                   icon={<Dashboard sx={{ fontSize: 28 }} />}
-                  label="Panel de Retención"
+                  label="Dashboard de Retención"
                   iconPosition="start"
                   disabled={!prediction}
                 />
                 <Tab
                   icon={<History sx={{ fontSize: 28 }} />}
-                  label="Historial"
+                  label="Historial de Análisis"
                   iconPosition="start"
                 />
               </Tabs>
@@ -188,23 +251,18 @@ function App() {
                     gutterBottom
                     sx={{
                       fontWeight: 700,
-                      background:
-                        "linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%)",
-                      backgroundClip: "text",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
+                      color: "#1a3a5c",
                     }}
                   >
-                    Análisis Predictivo de Retención
+                    Sistema de Predicción de Churn Bancario
                   </Typography>
                   <Typography
                     variant="body1"
                     color="text.secondary"
                     sx={{ maxWidth: 800, mx: "auto" }}
                   >
-                    Complete el perfil del usuario de su billetera digital para
-                    obtener una predicción en tiempo real con IA avanzada.
-                    Precisión del modelo: 98.5%
+                    Evalúe el riesgo de abandono de clientes bancarios mediante
+                    análisis predictivo basado en Machine Learning.
                   </Typography>
                 </Box>
                 <PredictionForm onSubmit={handlePrediction} loading={loading} />
@@ -218,11 +276,11 @@ function App() {
                       sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
                     />
                     <Typography variant="h6" color="text.secondary">
-                      No hay resultados aún
+                      Sin resultados disponibles
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Complete el formulario de evaluación para ver los
-                      resultados
+                      Complete la evaluación del cliente para ver el análisis
+                      predictivo
                     </Typography>
                   </Box>
                 )}
@@ -245,18 +303,18 @@ function App() {
             py: 3,
             textAlign: "center",
             color: "text.secondary",
-            bgcolor: "#f8f9fa",
-            borderTop: "3px solid #fbbf24",
+            bgcolor: "#f4f6f8",
+            borderTop: "2px solid #1a3a5c",
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600 }}>
-            WalletInsight Pro 2025 | Plataforma de Inteligencia Predictiva
+            ChurnInsight Banking 2026 | Sistema de Retención de Clientes
           </Typography>
           <Typography
             variant="caption"
             sx={{ display: "block", mt: 0.5, fontSize: "0.7rem" }}
           >
-            Powered by IA Avanzada Machine Learning Spring Boot
+            Powered by XGBoost Machine Learning | Spring Boot Backend
           </Typography>
         </Box>
       </Box>

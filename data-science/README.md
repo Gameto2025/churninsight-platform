@@ -1,131 +1,75 @@
-# ChurnInsight - Data Science Module
+ 🏦 Sistema de Predicción de Churn  para un Banco 
 
-Este módulo contiene el código para análisis, entrenamiento y servicio de predicción de churn en la plataforma ChurnInsight.
+Este proyecto implementa una solución de **inteligencia artificial** de extremo a extremo orientada a la detección temprana de clientes con alta probabilidad de abandono (**Churn**) en un Banco.
 
-## Estructura del Proyecto
+---
 
-```
-data-science/
-├── data/                    # Datasets y archivos de datos
-├── models/                  # Modelos entrenados serializados
-├── notebooks/              # Notebooks de Jupyter para análisis exploratorio
-├── src/                    # Código fuente Python
-│   ├── __init__.py
-│   ├── config.py           # Configuración y constantes
-│   ├── data_utils.py       # Utilidades de procesamiento de datos
-│   ├── model_trainer.py    # Clase para entrenamiento de modelos
-│   └── model_service.py    # Servicio FastAPI para predicciones
-├── scripts/                # Scripts ejecutables
-│   ├── train_model.py      # Script para entrenar el modelo
-│   └── start_service.py    # Script para iniciar el servicio
-├── tests/                  # Tests unitarios
-│   └── test_data_utils.py
-├── requirements.txt        # Dependencias Python
-└── README.md              # Esta documentación
-```
+## 📁 Información General
+* **Versión:** 1.0.0
+* **Estado:** 🟢 Completado
+* **Dominio:** Analítica Predictiva / Machine Learning
 
-## Instalación y Configuración
+### 🛠️ Tecnologías
+* **Modelado:** Python (XGBoost)
+* **Interoperabilidad:** PMML y PKL
 
-### Prerrequisitos
+---
 
-- Python 3.9+
-- pip
+## 🚀 Descripción del Proyecto
+El Banco Alura enfrenta el desafío de retener clientes en un entorno financiero competitivo. Esta solución transforma el dataset histórico `Banco_Churn.csv` en un modelo predictivo robusto, capaz de estimar el riesgo de abandono de cada cliente en tiempo real.
 
-### Instalación
+### ⭐ Características Principales
+1. **Dataset Utilizado**: Banco_Churn.csv
+2.  **Modelo XGBoost:** Implementación de alto rendimiento para clasificación.
+3.  **Interoperabilidad PMML:** Exportación del modelo para consumo en Java sin dependencias de Python.
 
-1. Instalar dependencias:
+---
 
-```bash
-pip install -r requirements.txt
-```
+### ⚙️ Recursos y Configuración
 
-## Uso
+**`modelo_churn_banco.pmml`**: Modelo predictivo entrenado para ser usado en BackEnd y ser leido por java.
 
-### Entrenamiento del Modelo
+ **Contrato de entrada:**
 
-Para entrenar el modelo con los datos actuales:
+[
+    'Age_Risk',
+    
+    'NumOfProducts',
+    
+    'Inactivo_40_70',
+    
+    'Products_Risk_Flag',
+    
+    'Country_Risk_Flag'
+]
+---
 
-```bash
-python scripts/train_model.py
-```
+### Entrada para predecir Churn:
 
-### Iniciar Servicio de Predicción
+   Edad del cliente: 
+   
+   Número de productos contratados: 
+   ¿La cuenta está ACTIVA actualmente? (1=Sí, 0=No): 
+   
+   País:
+   
+   0 = France
+   
+   1 = Germany
+   
+   2 = Spain
+   
+   Seleccione país: 
 
-Para iniciar el servicio FastAPI:
+## ⚙️ Instalación y Ejecución Local
 
-```bash
-python scripts/start_service.py
-```
+1. **Clonar el repositorio:**
+   ```bash
+   git clone [https://github.com/Gameto2025/Churn_Banco.git]
 
-El servicio estará disponible en `http://localhost:8000`
+👥 Equipo de Trabajo
 
-### API Endpoints
+Gabriel Mendez Oteiza: Equipo Data Science.
 
-- `GET /` - Información del servicio
-- `GET /health` - Health check
-- `POST /predict` - Predicción de churn
+Martin Abreu   Equipo Data Svience.
 
-#### Ejemplo de Request
-
-```json
-{
-  "customer_id": "12345",
-  "monthly_charges": 65.5,
-  "tenure_months": 24,
-  "contract_type": "month-to-month",
-  "internet_service": "fiber_optic",
-  "total_charges": 1572.0
-}
-```
-
-#### Ejemplo de Response
-
-```json
-{
-  "customer_id": "12345",
-  "prevision": "alto_riesgo",
-  "probabilidad": 0.87
-}
-```
-
-## Desarrollo
-
-### Estructura del Código
-
-- **`config.py`**: Configuración centralizada del proyecto
-- **`data_utils.py`**: Funciones para carga y procesamiento de datos
-- **`model_trainer.py`**: Clase para entrenamiento y gestión de modelos
-- **`model_service.py`**: Servicio FastAPI para predicciones en producción
-
-### Tests
-
-Ejecutar tests:
-
-```bash
-python -m pytest tests/
-```
-
-## Arquitectura
-
-El módulo sigue una arquitectura modular:
-
-1. **Carga de Datos**: Utilidades para cargar y preprocesar datos
-2. **Entrenamiento**: Pipeline de ML para entrenar modelos
-3. **Servicio**: API REST para servir predicciones
-4. **Configuración**: Configuración centralizada
-
-## Métricas del Modelo
-
-El modelo actual (Random Forest) alcanza las siguientes métricas:
-
-- **Accuracy**: ~95%
-- **Precision**: Alto para ambas clases
-- **Recall**: Bueno para detección de churn
-
-## Próximos Pasos
-
-- [ ] Implementar validación cruzada
-- [ ] Añadir más algoritmos de ML
-- [ ] Implementar monitoring del modelo
-- [ ] Añadir tests de integración
-- [ ] Documentar API con OpenAPI

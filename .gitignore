@@ -22,3 +22,25 @@ Thumbs.db
 
 # Local env
 .env
+
+# Scripts de configuración local
+*.bat
+*.sh
+*.ps1
+test_integration.ps1
+setup.bat
+setup.sh
+
+# Archivos de respaldo
+*.backup
+*.corrupted
+*.bak
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Logs y temporales
+*.log
+logs/
+*.tmp

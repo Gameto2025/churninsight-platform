@@ -1,18 +1,6 @@
 import React from "react";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  Chip,
-  IconButton,
-} from "@mui/material";
-import {
-  AccountBalanceWallet,
-  Security,
-  Notifications,
-  Settings,
-} from "@mui/icons-material";
+import { AppBar, Toolbar, Typography, Box } from "@mui/material";
+import { AccountBalanceWallet } from "@mui/icons-material";
 
 interface HeaderProps {
   stats?: {
@@ -28,58 +16,29 @@ const Header: React.FC<HeaderProps> = ({ stats }) => {
       position="static"
       elevation={0}
       sx={{
-        background:
-          "linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%)",
-        borderBottom: "3px solid #fbbf24",
+        bgcolor: "background.paper",
+        borderBottom: "1px solid #e0e0e0",
+        color: "text.primary",
       }}
     >
       <Toolbar sx={{ py: 1.5 }}>
-        <AccountBalanceWallet sx={{ mr: 2, fontSize: 40, color: "#fbbf24" }} />
+        <AccountBalanceWallet
+          sx={{ mr: 2, fontSize: 40, color: "primary.main" }}
+        />
         <Box sx={{ flexGrow: 1 }}>
           <Typography
             variant="h5"
             component="div"
-            sx={{ fontWeight: 700, letterSpacing: 0.5 }}
+            sx={{ fontWeight: 700, letterSpacing: 0.5, color: "text.primary" }}
           >
-            WalletInsight Pro
+            ChurnInsight Banking
           </Typography>
           <Typography
             variant="caption"
-            sx={{ opacity: 0.95, fontSize: "0.75rem" }}
+            sx={{ color: "text.secondary", fontSize: "0.75rem" }}
           >
-            Plataforma de Inteligencia Predictiva | Billetera Digital
+            Sistema de Predicción de Abandono | Análisis Bancario
           </Typography>
-        </Box>
-
-        {/* Badges y notificaciones */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Chip
-            icon={<Security sx={{ color: "white !important" }} />}
-            label="Seguro"
-            size="small"
-            sx={{
-              bgcolor: "rgba(34, 197, 94, 0.9)",
-              color: "white",
-              fontWeight: 600,
-              px: 1,
-            }}
-          />
-          <Chip
-            label="IA Avanzada"
-            size="small"
-            sx={{
-              bgcolor: "rgba(251, 191, 36, 0.95)",
-              color: "#1e3c72",
-              fontWeight: 700,
-              px: 1,
-            }}
-          />
-          <IconButton size="small" sx={{ color: "white" }}>
-            <Notifications />
-          </IconButton>
-          <IconButton size="small" sx={{ color: "white" }}>
-            <Settings />
-          </IconButton>
         </Box>
       </Toolbar>
 
@@ -101,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ stats }) => {
               variant="caption"
               sx={{ opacity: 0.8, fontSize: "0.7rem" }}
             >
-              Usuarios Activos
+              Clientes Analizados
             </Typography>
             <Typography
               variant="body2"

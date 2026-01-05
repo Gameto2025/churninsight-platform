@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Typography, Paper } from "@mui/material";
-import { PredictionResponse } from "../types";
+import { ChurnPredictionResponse } from "../types";
 
 interface DashboardPanelProps {
-  prediction: PredictionResponse;
+  prediction: ChurnPredictionResponse;
 }
 
 const DashboardPanel: React.FC<DashboardPanelProps> = ({ prediction }) => {
@@ -16,12 +16,13 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ prediction }) => {
   if (hasError) {
     return (
       <Paper
-        elevation={3}
+        elevation={1}
         sx={{
           p: 4,
           bgcolor: "error.light",
           color: "error.contrastText",
           borderRadius: 2,
+          border: "1px solid #e0e0e0",
         }}
       >
         <Typography variant="h5" gutterBottom>
@@ -43,11 +44,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ prediction }) => {
         gutterBottom
         sx={{
           fontWeight: 700,
-          background:
-            "linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%)",
-          backgroundClip: "text",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          color: "text.primary",
         }}
       >
         Panel Estratégico de Retención
@@ -95,7 +92,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ prediction }) => {
                   Riesgo de Inactividad
                 </Typography>
                 <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                  {(prediction.probabilidad * 100).toFixed(1)}%
+                  {(prediction.churn_probability * 100).toFixed(1)}%
                 </Typography>
               </Box>
               <Box>
@@ -122,9 +119,9 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ prediction }) => {
               🎯 Acción Recomendada
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {prediction.probabilidad > 0.7
+              {prediction.churn_probability > 0.7
                 ? "Contacto inmediato con el usuario. Ofrecer cashback especial, beneficios premium y descuentos en transacciones."
-                : prediction.probabilidad > 0.4
+                : prediction.churn_probability > 0.4
                 ? "Activar campaña de engagement. Enviar promociones personalizadas y ofertas exclusivas en la wallet."
                 : "Mantener experiencia de usuario actual. Continuar monitoreando actividad y satisfacción en la plataforma."}
             </Typography>
@@ -142,9 +139,9 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ prediction }) => {
               ⏱️ Tiempo de Acción
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {prediction.probabilidad > 0.7
+              {prediction.churn_probability > 0.7
                 ? "URGENTE: Actuar en las próximas 24-48 horas"
-                : prediction.probabilidad > 0.4
+                : prediction.churn_probability > 0.4
                 ? "Moderado: Actuar dentro de 7 días"
                 : "Normal: Monitoreo continuo mensual"}
             </Typography>

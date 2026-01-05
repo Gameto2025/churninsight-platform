@@ -1,27 +1,35 @@
 import React from "react";
 import {
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   Box,
   Typography,
-  Tooltip,
-  IconButton,
   Paper,
-  Chip,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  Divider,
 } from "@mui/material";
-import {
-  Info,
-  Person,
-  AttachMoney,
-  Star,
-  TrendingUp,
-} from "@mui/icons-material";
+import { Person, Info } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
-import { FormData } from "./types";
+
+// Interfaz interna para el formulario (datos que ingresa el usuario)
+interface ClientFormData {
+  age: number;
+  numOfProducts: number;
+  isActiveMember: number;
+  country: string;
+}
+
+// Tipos alineados con el modelo de backend/data-science
+export interface ChurnFormData {
+  ageRisk: number;
+  numOfProducts: number;
+  inactivo4070: number;
+  productsRiskFlag: number;
+  countryRiskFlag: number;
+}
 
 interface PredictionFormProps {
   onSubmit: (data: any) => void;
@@ -36,363 +44,209 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
     control,
     handleSubmit,
     formState: { errors },
-    watch,
-  } = useForm<FormData>({
+  } = useForm<ClientFormData>({
     defaultValues: {
-      customer_id: "",
-      age: "",
-      income_level: "Medio",
-      total_transactions: "",
-      avg_transaction_value: "",
-      active_days: "",
-      app_usage_frequency: "Semanal",
-      customer_satisfaction_score: "",
-      last_transaction_days_ago: "",
+      age: 30,
+      numOfProducts: 1,
+      isActiveMember: 1,
+      country: "France",
     },
   });
 
-  const onFormSubmit = (data: FormData) => {
-    const sanitizedData = {
-      customer_id: data.customer_id.trim(),
-      age: parseInt(data.age, 10),
-      income_level: data.income_level,
-      total_transactions: parseInt(data.total_transactions, 10),
-      avg_transaction_value: parseFloat(data.avg_transaction_value),
-      active_days: parseInt(data.active_days, 10),
-      app_usage_frequency: data.app_usage_frequency,
-      customer_satisfaction_score: parseInt(
-        data.customer_satisfaction_score,
-        10
-      ),
-      last_transaction_days_ago: parseInt(data.last_transaction_days_ago, 10),
-    };
-    onSubmit(sanitizedData);
-  };
+  const onFormSubmit = (data: ClientFormData) => {
+    // Transformar los datos del usuario a los parámetros del modelo
+    const ageRisk = data.age >= 40 && data.age <= 70 ? 1 : 0;
+    const inactivo4070 =
+      data.age >= 40 && data.age <= 70 && data.isActiveMember === 0 ? 1 : 0;
+    const productsRiskFlag = data.numOfProducts >= 3 ? 1 : 0;
+    const countryRiskFlag = data.country === "Germany" ? 1 : 0;
 
-  // Watch values for real-time calculations
-  const watchAllFields = watch();
-  const totalTransactions = parseInt(watchAllFields.total_transactions) || 0;
-  const avgTransactionValue =
-    parseFloat(watchAllFields.avg_transaction_value) || 0;
-  const estimatedLTV = totalTransactions * avgTransactionValue;
+    const modelData: ChurnFormData = {
+      ageRisk,
+      numOfProducts: data.numOfProducts,
+      inactivo4070,
+      productsRiskFlag,
+      countryRiskFlag,
+    };
+
+    onSubmit(modelData);
+  };
 
   return (
     <Box component="form" onSubmit={handleSubmit(onFormSubmit)} sx={{ mt: 3 }}>
       <Paper
-        elevation={2}
-        sx={{ p: 3, mb: 3, bgcolor: "primary.main", color: "white" }}
+        elevation={1}
+        sx={{
+          p: 3,
+          borderRadius: 8,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          border: "1px solid #e0e0e0",
+          bgcolor: "background.paper",
+          mb: 4,
+        }}
       >
         <Typography
           variant="h5"
           gutterBottom
-          sx={{ display: "flex", alignItems: "center" }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            color: "#000000",
+            fontWeight: 600,
+          }}
         >
-          <Person sx={{ mr: 1 }} />
-          Información del Cliente
+          <Person sx={{ mr: 1, color: "#234567" }} />
+          Evaluación de Cliente Bancario
         </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-          Complete todos los campos para realizar una predicción precisa
+        <Typography variant="body2" sx={{ color: "#424242" }}>
+          Complete la información del cliente para evaluar el riesgo de abandono
         </Typography>
       </Paper>
 
-      {/* Sección de Datos Personales */}
-      <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom color="primary" sx={{ mb: 2 }}>
-          Datos Personales
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="customer_id"
-              control={control}
-              rules={{
-                required: "ID del cliente es obligatorio",
-                maxLength: { value: 100, message: "Máximo 100 caracteres" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="ID del Cliente"
-                  error={!!errors.customer_id}
-                  helperText={errors.customer_id?.message}
-                  InputProps={{
-                    endAdornment: (
-                      <Tooltip title="Identificador único del cliente en el sistema">
-                        <IconButton size="small">
-                          <Info fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
-
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="age"
-              control={control}
-              rules={{
-                required: "Edad es obligatoria",
-                min: { value: 18, message: "Edad mínima 18 años" },
-                max: { value: 70, message: "Edad máxima 70 años" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type="number"
-                  label="Edad"
-                  error={!!errors.age}
-                  helperText={errors.age?.message || "Entre 18 y 70 años"}
-                  InputProps={{
-                    endAdornment: (
-                      <Chip
-                        label="años"
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
-
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="income_level"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth>
-                  <InputLabel>Nivel de Ingreso</InputLabel>
-                  <Select {...field} label="Nivel de Ingreso">
-                    <MenuItem value="Bajo">
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <AttachMoney />
-                        Bajo
-                      </Box>
-                    </MenuItem>
-                    <MenuItem value="Medio">
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <AttachMoney />
-                        <AttachMoney />
-                        Medio
-                      </Box>
-                    </MenuItem>
-                    <MenuItem value="Alto">
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <AttachMoney />
-                        <AttachMoney />
-                        <AttachMoney />
-                        Alto
-                      </Box>
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            />
-          </Box>
-
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="app_usage_frequency"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth>
-                  <InputLabel>Frecuencia de Uso de la App</InputLabel>
-                  <Select {...field} label="Frecuencia de Uso de la App">
-                    <MenuItem value="Diaria">📱 Diaria</MenuItem>
-                    <MenuItem value="Semanal">📅 Semanal</MenuItem>
-                    <MenuItem value="Mensual">📆 Mensual</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            />
-          </Box>
-        </Box>
-      </Paper>
-
-      {/* Sección de Actividad Transaccional */}
-      <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-        <Typography
-          variant="h6"
-          gutterBottom
-          color="primary"
-          sx={{ mb: 2, display: "flex", alignItems: "center" }}
-        >
-          <TrendingUp sx={{ mr: 1 }} />
-          Actividad Transaccional
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="total_transactions"
-              control={control}
-              rules={{
-                required: "Total de transacciones es obligatorio",
-                min: { value: 0, message: "Debe ser mayor o igual a 0" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type="number"
-                  label="Total de Transacciones"
-                  error={!!errors.total_transactions}
-                  helperText={errors.total_transactions?.message}
-                />
-              )}
-            />
-          </Box>
-
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="avg_transaction_value"
-              control={control}
-              rules={{
-                required: "Valor promedio es obligatorio",
-                min: { value: 0, message: "Debe ser mayor o igual a 0" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type="number"
-                  label="Valor Promedio de Transacción"
-                  error={!!errors.avg_transaction_value}
-                  helperText={errors.avg_transaction_value?.message}
-                  InputProps={{
-                    startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-                  }}
-                />
-              )}
-            />
-          </Box>
-
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="active_days"
-              control={control}
-              rules={{
-                required: "Días activos son obligatorios",
-                min: { value: 0, message: "Debe ser mayor o igual a 0" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type="number"
-                  label="Días Activos"
-                  error={!!errors.active_days}
-                  helperText={
-                    errors.active_days?.message ||
-                    "Días que el cliente ha estado activo"
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <Chip
-                        label="días"
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
-
-          <Box sx={{ flex: "1 1 calc(50% - 12px)", minWidth: "280px" }}>
-            <Controller
-              name="last_transaction_days_ago"
-              control={control}
-              rules={{
-                required: "Días desde última transacción son obligatorios",
-                min: { value: 0, message: "Debe ser mayor o igual a 0" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type="number"
-                  label="Días desde Última Transacción"
-                  error={!!errors.last_transaction_days_ago}
-                  helperText={errors.last_transaction_days_ago?.message}
-                  InputProps={{
-                    endAdornment: (
-                      <Chip
-                        label="días"
-                        size="small"
-                        color="warning"
-                        variant="outlined"
-                      />
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
+      {/* Formulario con campos comprensibles */}
+      <Paper
+        elevation={1}
+        sx={{
+          p: 4,
+          mb: 3,
+          border: "1px solid #e0e0e0",
+          bgcolor: "background.paper",
+          borderRadius: 2,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+          <Info sx={{ mr: 1, color: "#234567", fontSize: 20 }} />
+          <Typography variant="h6" sx={{ color: "#000000", fontWeight: 600 }}>
+            Información del Cliente
+          </Typography>
         </Box>
 
-        {estimatedLTV > 0 && (
-          <Box sx={{ mt: 2, p: 2, bgcolor: "success.light", borderRadius: 2 }}>
-            <Typography variant="body2" color="success.dark" fontWeight="bold">
-              💰 Valor Estimado Generado: ${estimatedLTV.toFixed(2)}
-            </Typography>
-          </Box>
-        )}
-      </Paper>
+        <Divider sx={{ mb: 3 }} />
 
-      {/* Sección de Satisfacción */}
-      <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-        <Typography
-          variant="h6"
-          gutterBottom
-          color="primary"
-          sx={{ mb: 2, display: "flex", alignItems: "center" }}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+            gap: 3,
+          }}
         >
-          <Star sx={{ mr: 1 }} />
-          Satisfacción del Cliente
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-          <Box sx={{ width: "100%" }}>
-            <Controller
-              name="customer_satisfaction_score"
-              control={control}
-              rules={{
-                required: "Puntuación de satisfacción es obligatoria",
-                min: { value: 1, message: "Debe ser entre 1 y 10" },
-                max: { value: 10, message: "Debe ser entre 1 y 10" },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type="number"
-                  label="Puntuación de Satisfacción"
-                  error={!!errors.customer_satisfaction_score}
-                  helperText={
-                    errors.customer_satisfaction_score?.message ||
-                    "Escala de 1 (muy insatisfecho) a 10 (muy satisfecho)"
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        {[...Array(parseInt(field.value) || 0)].map((_, i) => (
-                          <Star key={i} fontSize="small" color="warning" />
-                        ))}
-                      </Box>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
+          {/* Edad */}
+          <Controller
+            name="age"
+            control={control}
+            rules={{
+              required: "La edad es obligatoria",
+              min: { value: 18, message: "La edad mínima es 18 años" },
+              max: { value: 100, message: "La edad máxima es 100 años" },
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="number"
+                fullWidth
+                label="Edad del Cliente"
+                placeholder="Ej: 45"
+                error={!!errors.age}
+                helperText={
+                  errors.age?.message || "Ingrese la edad del cliente"
+                }
+                InputProps={{
+                  inputProps: { min: 18, max: 100 },
+                }}
+              />
+            )}
+          />
+
+          {/* Número de productos */}
+          <Controller
+            name="numOfProducts"
+            control={control}
+            rules={{
+              required: "El número de productos es obligatorio",
+              min: { value: 1, message: "Mínimo 1 producto" },
+              max: { value: 10, message: "Máximo 10 productos" },
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="number"
+                fullWidth
+                label="Productos Contratados"
+                placeholder="Ej: 2"
+                error={!!errors.numOfProducts}
+                helperText={
+                  errors.numOfProducts?.message ||
+                  "Cantidad de productos bancarios activos"
+                }
+                InputProps={{
+                  inputProps: { min: 1, max: 10 },
+                }}
+              />
+            )}
+          />
+
+          {/* Estado de la cuenta */}
+          <Controller
+            name="isActiveMember"
+            control={control}
+            rules={{ required: "El estado de la cuenta es obligatorio" }}
+            render={({ field }) => (
+              <FormControl fullWidth error={!!errors.isActiveMember}>
+                <InputLabel>Estado de la Cuenta</InputLabel>
+                <Select {...field} label="Estado de la Cuenta">
+                  <MenuItem value={1}>Activa</MenuItem>
+                  <MenuItem value={0}>Inactiva</MenuItem>
+                </Select>
+                {errors.isActiveMember && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 0.5, ml: 1.5 }}
+                  >
+                    {errors.isActiveMember.message}
+                  </Typography>
+                )}
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 0.5, ml: 1.5, color: "#666" }}
+                >
+                  Indica si el cliente usa activamente sus servicios
+                </Typography>
+              </FormControl>
+            )}
+          />
+
+          {/* País */}
+          <Controller
+            name="country"
+            control={control}
+            rules={{ required: "El país es obligatorio" }}
+            render={({ field }) => (
+              <FormControl fullWidth error={!!errors.country}>
+                <InputLabel>País de Residencia</InputLabel>
+                <Select {...field} label="País de Residencia">
+                  <MenuItem value="France">Francia</MenuItem>
+                  <MenuItem value="Germany">Alemania</MenuItem>
+                  <MenuItem value="Spain">España</MenuItem>
+                </Select>
+                {errors.country && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 0.5, ml: 1.5 }}
+                  >
+                    {errors.country.message}
+                  </Typography>
+                )}
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 0.5, ml: 1.5, color: "#666" }}
+                >
+                  Seleccione el país donde reside el cliente
+                </Typography>
+              </FormControl>
+            )}
+          />
         </Box>
       </Paper>
 
@@ -407,9 +261,19 @@ const PredictionForm: React.FC<PredictionFormProps> = ({
             py: 1.5,
             fontSize: "1.1rem",
             minWidth: 250,
+            bgcolor: "#5a6c7d",
+            color: "#ffffff",
+            fontWeight: 600,
+            "&:hover": {
+              bgcolor: "#4a5c6d",
+            },
+            "&:disabled": {
+              bgcolor: "#e0e0e0",
+              color: "#9e9e9e",
+            },
           }}
         >
-          {loading ? "🔄 Analizando..." : "🎯 Predecir Riesgo de Churn"}
+          {loading ? "Analizando..." : "Evaluar Riesgo de Abandono"}
         </Button>
       </Box>
     </Box>

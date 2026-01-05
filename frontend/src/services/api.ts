@@ -1,7 +1,31 @@
-import { PredictionRequest, PredictionResponse } from "../types";
+import { ChurnPredictionRequest, ChurnPredictionResponse } from "../types";
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+const normalizeApiBaseUrl = (raw: string | undefined): string => {
+  const fallback = "http://localhost:8080/api";
+  const value = (raw ?? "").trim();
+
+  if (!value) return fallback;
+
+  // Common misconfig: ":8080/api" (missing host+scheme)
+  if (value.startsWith(":")) return `http://localhost${value}`;
+
+  // Common misconfig: "localhost:8080/api" (missing scheme)
+  if (/^localhost[:/]/i.test(value) || /^127\.0\.0\.1[:/]/i.test(value)) {
+    return `http://${value}`;
+  }
+
+  // If it already includes a scheme (http/https), keep it.
+  if (/^https?:\/\//i.test(value)) return value;
+
+  // If it's a relative path like "/api", make it absolute to current origin.
+  if (value.startsWith("/")) {
+    return `${window.location.origin}${value.replace(/\/+$/, "")}`;
+  }
+
+  return value;
+};
+
+export const API_BASE_URL = normalizeApiBaseUrl(process.env.REACT_APP_API_URL);
 
 // Interfaces para tipos de datos
 export interface StatsData {
@@ -13,11 +37,13 @@ export interface StatsData {
 export interface PredictionHistory {
   id: number;
   customerId: string;
-  probability: number;
-  prediction: string;
-  age: number;
-  incomeLevel: string;
-  createdAt: string;
+  churnProbability: number;
+  ageRisk: number;
+  numOfProducts: number;
+  inactivo4070: number;
+  productsRiskFlag: number;
+  countryRiskFlag: number;
+  predictionDate: string;
 }
 
 // Función para sanitizar y validar datos
@@ -25,50 +51,68 @@ const sanitizeInput = (value: string): string => {
   return value.trim().replace(/[<>]/g, "");
 };
 
+// Función auxiliar para obtener headers con autenticación
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem("token");
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    Accept: "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
 // Función para realizar la predicción con validaciones de seguridad
 export const predictChurn = async (
-  data: PredictionRequest
-): Promise<PredictionResponse> => {
+  data: ChurnPredictionRequest
+): Promise<ChurnPredictionResponse> => {
   // Validaciones de seguridad adicionales
-  if (!data.customer_id || data.customer_id.length > 100) {
-    throw new Error("ID de cliente inválido");
+  if (data.ageRisk < 0 || data.ageRisk > 1) {
+    throw new Error("Age Risk debe ser 0 o 1");
   }
 
-  if (data.age < 18 || data.age > 70) {
-    throw new Error("Edad fuera del rango permitido");
+  if (data.numOfProducts < 0) {
+    throw new Error("Número de productos inválido");
   }
 
-  if (
-    data.customer_satisfaction_score < 1 ||
-    data.customer_satisfaction_score > 10
-  ) {
-    throw new Error("Puntuación de satisfacción fuera del rango permitido");
-  }
-
-  // Sanitizar el ID del cliente
-  const sanitizedData = {
-    ...data,
-    customer_id: sanitizeInput(data.customer_id),
+  // Preparar datos para enviar al backend Java (que luego envía a FastAPI)
+  const backendData = {
+    ageRisk: data.ageRisk,
+    numOfProducts: data.numOfProducts,
+    inactivo4070: data.inactivo4070,
+    productsRiskFlag: data.productsRiskFlag,
+    countryRiskFlag: data.countryRiskFlag,
   };
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
 
-    const response = await fetch(`${API_BASE_URL}/predict`, {
+    const response = await fetch(`${API_BASE_URL}/churn/predict`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(sanitizedData),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(backendData),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        const hasToken = Boolean(localStorage.getItem("token"));
+        if (hasToken) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("username");
+        }
+        throw new Error(
+          "Sesión no válida. Inicia sesión nuevamente para continuar."
+        );
+      }
       if (response.status === 400) {
         throw new Error("Datos de entrada inválidos");
       } else if (response.status === 500) {
@@ -78,19 +122,23 @@ export const predictChurn = async (
       }
     }
 
-    const result: PredictionResponse = await response.json();
+    const result = await response.json();
+
+    // La respuesta del backend debe incluir churn_probability y customer_id
+    const probability = result.churn_probability;
+    const customer_id = result.customer_id;
 
     // Validar la respuesta
-    if (!result.customer_id || typeof result.probabilidad !== "number") {
+    if (typeof probability !== "number" || typeof customer_id !== "string") {
       throw new Error("Respuesta del servidor inválida");
     }
 
     // Asegurar que la probabilidad esté en el rango correcto
-    if (result.probabilidad < 0 || result.probabilidad > 1) {
+    if (probability < 0 || probability > 1) {
       throw new Error("Probabilidad fuera del rango permitido");
     }
 
-    return result;
+    return { churn_probability: probability, customer_id };
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === "AbortError") {
@@ -112,16 +160,21 @@ export const fetchStats = async (): Promise<StatsData> => {
 
     const response = await fetch(`${API_BASE_URL}/stats`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: getAuthHeaders(),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        // Token ausente/expirado: devolver defaults sin romper la UI
+        return {
+          activeUsers: 0,
+          retentionRate: 0,
+          todayPredictions: 0,
+        };
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
 
@@ -141,25 +194,16 @@ export const fetchStats = async (): Promise<StatsData> => {
 /**
  * Obtiene el historial de predicciones
  */
-export const fetchHistory = async (
-  sortBy: "date" | "income" = "date",
-  limit: number = 50
-): Promise<PredictionHistory[]> => {
+export const fetchHistory = async (): Promise<PredictionHistory[]> => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(
-      `${API_BASE_URL}/history?sortBy=${sortBy}&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        signal: controller.signal,
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/churn/history`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      signal: controller.signal,
+    });
 
     clearTimeout(timeoutId);
 
