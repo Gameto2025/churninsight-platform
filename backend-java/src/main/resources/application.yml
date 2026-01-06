@@ -8,8 +8,8 @@ spring:
   # Configuración de MySQL
   datasource:
     url: jdbc:mysql://localhost:3306/churninsight?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
-    username: 
-    password: 
+    username: urs000
+    password: Salmon00@45
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
