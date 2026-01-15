@@ -11,18 +11,19 @@ st.title("🏦 Churn Insight: Predicción de Abandono")
 st.markdown("Herramienta de análisis de riesgo para clientes bancarios.")
 
 # 1. Cargar el modelo
+# Asegúrate de que el nombre sea EXACTO al de tu archivo en GitHub
+MODEL_PATH = "modelo_Banco_churn.pkl" 
+
 @st.cache_resource
 def load_model():
-    # Buscamos el archivo en la carpeta actual
-    if os.path.exists(MODEL_NAME):
+    # Aquí es donde estaba el error: antes decía MODEL_NAME
+    if os.path.exists(MODEL_PATH): 
         try:
-            return joblib.load(MODEL_NAME)
+            return joblib.load(MODEL_PATH)
         except Exception as e:
             st.error(f"Error de compatibilidad: {e}")
-            st.info("Sugerencia: Cambia scikit-learn a 1.2.2 en requirements.txt")
     else:
-        # Si no lo encuentra, listamos los archivos para saber qué ve el servidor
-        st.error(f"❌ El archivo '{MODEL_NAME}' no existe en la raíz.")
+        st.error(f"❌ El archivo '{MODEL_PATH}' no existe en la raíz.")
         st.write("Archivos detectados:", os.listdir("."))
     return None
 
