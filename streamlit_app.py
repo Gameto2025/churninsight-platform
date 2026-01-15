@@ -11,18 +11,19 @@ st.title("🏦 Churn Insight: Predicción de Abandono")
 st.markdown("Herramienta de análisis de riesgo para clientes bancarios.")
 
 # 1. Cargar el modelo
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "modelo_Banco_churn.pkl")
-
 @st.cache_resource
 def load_model():
-    if os.path.exists(MODEL_PATH):
+    # Buscamos el archivo en la carpeta actual
+    if os.path.exists(MODEL_NAME):
         try:
-            # Usamos el nombre del archivo directo si está en la raíz
-            return joblib.load(MODEL_PATH)
+            return joblib.load(MODEL_NAME)
         except Exception as e:
-            st.error(f"Error técnico de compatibilidad: {e}")
-            st.info("Prueba bajando la versión de Python a 3.11 en Settings.")
+            st.error(f"Error de compatibilidad: {e}")
+            st.info("Sugerencia: Cambia scikit-learn a 1.2.2 en requirements.txt")
+    else:
+        # Si no lo encuentra, listamos los archivos para saber qué ve el servidor
+        st.error(f"❌ El archivo '{MODEL_NAME}' no existe en la raíz.")
+        st.write("Archivos detectados:", os.listdir("."))
     return None
 
 pipe_xgb = load_model()
