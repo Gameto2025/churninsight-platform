@@ -11,15 +11,18 @@ st.title("🏦 Churn Insight: Predicción de Abandono")
 st.markdown("Herramienta de análisis de riesgo para clientes bancarios.")
 
 # 1. Cargar el modelo
-MODEL_PATH = "modelo_Banco_churn.pkl"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "modelo_Banco_churn.pkl")
 
 @st.cache_resource
 def load_model():
     if os.path.exists(MODEL_PATH):
         try:
+            # Usamos el nombre del archivo directo si está en la raíz
             return joblib.load(MODEL_PATH)
         except Exception as e:
-            st.error(f"Error técnico al cargar el modelo: {e}")
+            st.error(f"Error técnico de compatibilidad: {e}")
+            st.info("Prueba bajando la versión de Python a 3.11 en Settings.")
     return None
 
 pipe_xgb = load_model()
