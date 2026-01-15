@@ -2,9 +2,9 @@ streamlit
 fastapi
 uvicorn
 joblib
-pandas
-numpy
+pandas==2.0.3
+numpy==1.24.3
 scikit-learn==1.2.2
 imbalanced-learn
 streamlit
-xgboost
+xgboost==1.7.6
