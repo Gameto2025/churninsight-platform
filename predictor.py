@@ -1,17 +1,14 @@
 import os
-import joblib  # <--- IMPORTANTE: Faltaba esta línea
+import joblib
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
-# 1. Configuración de la ruta del modelo
-# Asegúrate de que el nombre del archivo coincida exactamente con el que subiste a GitHub
-MODEL_FILENAME = "modelo_Banco_churn.pkl" 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", MODEL_FILENAME)
-
-# Si el archivo está en la raíz (fuera de la carpeta models), usa esta línea:
-# MODEL_PATH = os.path.join(os.path.dirname(__file__), MODEL_FILENAME)
+# 1. Configuración de la ruta del modelo (Basado en tus fotos de GitHub)
+# Como el .pkl está en la misma carpeta que este script, usamos la raíz.
+BASE_DIR = os.path.dirname(__file__)
+MODEL_PATH = os.path.join(BASE_DIR, "modelo_Banco_churn.pkl")
 
 # 2. Definición de esquemas de datos
 class PredictRequest(BaseModel):
@@ -25,12 +22,7 @@ class PredictResponse(BaseModel):
 app = FastAPI(title="Churn Predictor")
 
 # Configuración de CORS
-origins = [
-    "http://localhost:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:3000",
-    "https://platform-churninsight.streamlit.app", # Añadido para Streamlit
-]
+origins = ["*"] # Permitimos todos para facilitar la conexión con el frontend
 app.add_middleware(
     CORSMiddleware, 
     allow_origins=origins, 
@@ -39,33 +31,40 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# 4. Carga robusta del modelo
-if not os.path.exists(MODEL_PATH):
-    # Esto te ayudará a ver en los logs qué archivos realmente ve Python
-    available_files = os.listdir(os.path.dirname(MODEL_PATH) if os.path.dirname(MODEL_PATH) else ".")
-    raise FileNotFoundError(f"No se encontró el modelo en {MODEL_PATH}. Archivos disponibles: {available_files}")
-
+# 4. Carga del modelo usando joblib (más seguro para Scikit-Learn)
+model = None
 try:
-    model = joblib.load(MODEL_PATH)
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+    else:
+        # Esto ayuda a diagnosticar errores en los logs de Streamlit
+        print(f"ERROR: Archivo no encontrado en {MODEL_PATH}")
+        print(f"Archivos presentes en el directorio: {os.listdir(BASE_DIR)}")
 except Exception as e:
-    # Si falla joblib, intentamos capturar el error específico
-    raise RuntimeError(f"Error crítico al cargar el modelo: {str(e)}")
+    print(f"Error crítico al cargar el modelo: {e}")
 
 # 5. Endpoints
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_loaded": model is not None}
+    return {
+        "status": "ok", 
+        "model_loaded": model is not None,
+        "path_checked": MODEL_PATH
+    }
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(req: PredictRequest):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Modelo no cargado en el servidor")
+    
     try:
-        # Convertimos a formato que Scikit-Learn entiende (Matriz 2D)
+        # Convertir entrada a array de numpy (formato 2D esperado por sklearn)
         data = np.array(req.features).reshape(1, -1)
         
-        # Predicción de clase
+        # Realizar predicción
         pred = int(model.predict(data)[0])
         
-        # Predicción de probabilidad (si el modelo lo permite)
+        # Calcular probabilidad si el modelo lo permite
         if hasattr(model, "predict_proba"):
             pred_proba = float(model.predict_proba(data)[0, 1])
         else:
@@ -74,4 +73,4 @@ def predict(req: PredictRequest):
         return PredictResponse(prediction=pred, probability=pred_proba)
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en la predicción: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
