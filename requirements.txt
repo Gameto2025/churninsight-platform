@@ -4,7 +4,7 @@ uvicorn
 joblib
 pandas
 numpy
-scikit-learn
+cikit-learn==1.3.2
 imbalanced-learn
 streamlit
 xgboost
