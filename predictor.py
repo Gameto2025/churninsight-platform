@@ -25,8 +25,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True
 
 # Cargar modelo
 try:
-    with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
+   model = joblib.load(MODEL_PATH)
 except Exception as e:
     raise RuntimeError(f"Failed to load model: {e}")
 
