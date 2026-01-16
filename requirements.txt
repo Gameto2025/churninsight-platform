@@ -7,3 +7,5 @@ numpy==1.23.5  # ¡IMPORTANTE! Versión compatible con scikit-learn 1.2.2
 scikit-learn==1.2.2
 imbalanced-learn==0.10.1
 xgboost==1.7.6
+setuptools==68.2.2
+wheel
